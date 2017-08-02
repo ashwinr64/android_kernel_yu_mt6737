@@ -32,6 +32,16 @@ static struct page *no_page_table(struct vm_area_struct *vma,
 	return NULL;
 }
 
+/*
+ * FOLL_FORCE can write to even unwritable pte's, but only
+ * after we've gone through a COW cycle and they are dirty.
+ */
+static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
+{
+	return pte_write(pte) ||
+		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
+}
+
 static struct page *follow_page_pte(struct vm_area_struct *vma,
 		unsigned long address, pmd_t *pmd, unsigned int flags)
 {
@@ -66,7 +76,7 @@ retry:
 	}
 	if ((flags & FOLL_NUMA) && pte_numa(pte))
 		goto no_page;
-	if ((flags & FOLL_WRITE) && !pte_write(pte)) {
+	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
 		pte_unmap_unlock(ptep, ptl);
 		return NULL;
 	}
@@ -315,7 +325,7 @@ static int faultin_page(struct task_struct *tsk, struct vm_area_struct *vma,
 	 * reCOWed by userspace write).
 	 */
 	if ((ret & VM_FAULT_WRITE) && !(vma->vm_flags & VM_WRITE))
-		*flags &= ~FOLL_WRITE;
+		*flags |= FOLL_COW;
 	return 0;
 }
 
@@ -323,8 +333,21 @@ static int check_vma_flags(struct vm_area_struct *vma, unsigned long gup_flags)
 {
 	vm_flags_t vm_flags = vma->vm_flags;
 
+#ifdef CONFIG_MTK_EXTMEM
+	if (vm_flags & (VM_IO | VM_PFNMAP)) {
+		/*
+		* Would pass VM_IO | VM_RESERVED | VM_PFNMAP.
+		* (for Reserved Physical Memory PFN Mapping Usage)
+		*/
+		if (!((vma->vm_flags&VM_IO) &&
+			(vma->vm_flags&VM_RESERVED) &&
+			(vma->vm_flags&VM_PFNMAP)))
+			return -EFAULT;
+	}
+#else
 	if (vm_flags & (VM_IO | VM_PFNMAP))
 		return -EFAULT;
+#endif
 
 	if (gup_flags & FOLL_WRITE) {
 		if (!(vm_flags & VM_WRITE)) {

@@ -1,0 +1,4 @@
+/misc/mediatek/mach/mt[4-9][1-9][0-9][0-9]/[a-z][0-9][0-9][0-9][0-9]
+/misc/mediatek/flashlight/src/mt[4-9][1-9][0-9][0-9]/[a-z][0-9][0-9][0-9][0-9]
+/misc/mediatek/imgsensor/src/mt[4-9][1-9][0-9][0-9]/camera_project/[a-z][0-9][0-9][0-9][0-9]
+/misc/mediatek/include/mt-plat/mt[4-9][1-9][0-9][0-9]/[a-z][0-9][0-9][0-9][0-9]

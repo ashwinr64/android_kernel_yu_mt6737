@@ -23,5 +23,16 @@ obj-$(CONFIG_INPUT_JOYSTICK)	+= joystick/
 obj-$(CONFIG_INPUT_TABLET)	+= tablet/
 obj-$(CONFIG_INPUT_TOUCHSCREEN)	+= touchscreen/
 obj-$(CONFIG_INPUT_MISC)	+= misc/
+#obj-$(CONFIG_MTK_FINGERPRINT_SUPPORT)  += fingerprint/
 
 obj-$(CONFIG_INPUT_APMPOWER)	+= apm-power.o
+obj-$(CONFIG_INPUT_KEYRESET)	+= keyreset.o
+obj-$(CONFIG_INPUT_KEYCOMBO)	+= keycombo.o
+
+# guomingyi add for fingerprint start.
+include $(PWD)/vendor/tinno/Fingerprint-N/kernel_macro_cfg
+ifneq ($(strip $(TINNO_FINGERPRINT_SUPPORT)),)
+obj-y += ../../../$(kernel_fp_source_dir)/
+endif
+# guomingyi add for fingerprint end.
+
